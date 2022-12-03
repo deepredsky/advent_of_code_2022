@@ -3,23 +3,9 @@ use std::time::Instant;
 
 fn parse_input(path: &str) -> Vec<Vec<String>> {
     let input: String = fs::read_to_string(path).expect("should read file");
-    let input_iter: Vec<String> = input
-        .split("\n")
-        .collect::<Vec<&str>>()
-        .iter()
-        .map(|x| x.to_string())
-        .collect();
-    let plays: Vec<Vec<String>> = input_iter
-        .into_iter()
-        .map(|line| {
-            let split_line: Vec<String> = line
-                .split(" ")
-                .collect::<Vec<&str>>()
-                .iter()
-                .map(|x| x.to_string())
-                .collect();
-            split_line
-        })
+    let plays = input
+        .lines()
+        .map(|line| line.split(' ').map(|x| x.to_string()).collect())
         .collect();
     plays
 }
@@ -34,7 +20,7 @@ fn shape_score(character: &str) -> i32 {
 }
 
 fn outcome(play: Vec<String>) -> i32 {
-    match &*play.join("") {
+    match play.join("").as_str() {
         "AX" => 3,
         "AY" => 6,
         "AZ" => 0,
@@ -58,7 +44,7 @@ fn outcome_score(character: &str) -> i32 {
 }
 
 fn shape_score_part2(play: Vec<String>) -> i32 {
-    match &*play.join("") {
+    match play.join("").as_str() {
         "AX" => 3,
         "AY" => 1,
         "AZ" => 2,
@@ -75,7 +61,7 @@ fn shape_score_part2(play: Vec<String>) -> i32 {
 fn part_1(input: Vec<Vec<String>>) -> i32 {
     input
         .iter()
-        .map(|play| outcome(play.clone()) + shape_score(&*play[1]))
+        .map(|play| outcome(play.clone()) + shape_score(&play[1]))
         .collect::<Vec<i32>>()
         .iter()
         .sum()
@@ -84,7 +70,7 @@ fn part_1(input: Vec<Vec<String>>) -> i32 {
 fn part_2(input: Vec<Vec<String>>) -> i32 {
     input
         .iter()
-        .map(|play| outcome_score(&*play[1]) + shape_score_part2(play.clone()))
+        .map(|play| outcome_score(&play[1]) + shape_score_part2(play.to_vec()))
         .collect::<Vec<i32>>()
         .iter()
         .sum()
@@ -99,7 +85,7 @@ fn solve_part_1(input: Vec<Vec<String>>) {
 
 fn solve_part_2(input: Vec<Vec<String>>) {
     let part2_start = Instant::now();
-    let part_2_result = part_2(input.clone());
+    let part_2_result = part_2(input);
     println!("Part 2 answer: {}", part_2_result);
     println!("Part 2 time: {:.2?}", part2_start.elapsed());
 }

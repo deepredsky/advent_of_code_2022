@@ -1,13 +1,13 @@
 use array_tool::vec::Intersect;
-use std::collections::HashSet;
 use std::fs;
 use std::time::Instant;
 
 fn parse_input(path: &str) -> Vec<String> {
-    let input: String = fs::read_to_string(path).expect("should read file");
-    let rucksacks: Vec<String> = input.lines().map(|x| x.to_string()).collect();
-
-    rucksacks
+    fs::read_to_string(path)
+        .expect("should read file")
+        .lines()
+        .map(|x| x.to_string())
+        .collect()
 }
 
 fn score_letter(letter: char) -> u32 {
@@ -58,7 +58,7 @@ fn solve_part_1(input: Vec<String>) {
 
 fn solve_part_2(input: Vec<String>) {
     let part2_start = Instant::now();
-    let part_2_result = part_2(input.clone());
+    let part_2_result = part_2(input);
     println!("Part 2 answer: {}", part_2_result);
     println!("Part 2 time: {:.2?}", part2_start.elapsed());
 }
