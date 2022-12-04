@@ -31,41 +31,33 @@ fn convert_to_range(input: String) -> Range<usize> {
     let a = parsed[0];
     let b = parsed[1];
 
-    if parsed[0] == parsed[1] {
-        a..(a + 1)
-    } else {
-        a..(b + 1)
-    }
+    a..(b + 1)
 }
 
-// "1-5" -> 1..5
-
-fn wat(section_pair: SectionPair) -> bool {
-    let a = &section_pair[0];
-    let ac = a.clone().collect::<Vec<usize>>();
-    let b = &section_pair[1];
-    let bc = b.clone().collect::<Vec<usize>>();
-
-    let x = ac.intersect(bc);
-
-    x.len() == a.len() || x.len() == b.len()
+fn convert_range_to_vec(pair: Range<usize>) -> Vec<usize> {
+    pair.collect()
 }
 
-fn wat1(section_pair: SectionPair) -> bool {
-    let a = &section_pair[0];
-    let ac = a.clone().collect::<Vec<usize>>();
-    let b = &section_pair[1];
-    let bc = b.clone().collect::<Vec<usize>>();
+fn is_contained(section_pair: SectionPair) -> bool {
+    let a = convert_range_to_vec(section_pair[0].clone());
+    let b = convert_range_to_vec(section_pair[1].clone());
+    let x = a.intersect(b.clone()).len();
 
-    let x = ac.intersect(bc);
+    x == a.len() || x == b.len()
+}
 
-    x.len() > 0
+fn is_overlapping(section_pair: SectionPair) -> bool {
+    let a = convert_range_to_vec(section_pair[0].clone());
+    let b = convert_range_to_vec(section_pair[1].clone());
+    let x = a.intersect(b.clone()).len();
+
+    x > 0
 }
 
 fn part_1(input: Input) -> usize {
     let mut count = 0;
     for section_pair in input {
-        if wat(section_pair) {
+        if is_contained(section_pair) {
             count += 1
         }
     }
@@ -75,7 +67,7 @@ fn part_1(input: Input) -> usize {
 fn part_2(input: Input) -> usize {
     let mut count = 0;
     for section_pair in input {
-        if wat1(section_pair) {
+        if is_overlapping(section_pair) {
             count += 1
         }
     }
@@ -84,16 +76,18 @@ fn part_2(input: Input) -> usize {
 
 fn solve_part_1(input: Input) {
     let part1_start = Instant::now();
-    let part_1_result = part_1(input);
-    println!("Part 1 answer: {}", part_1_result);
-    println!("Part 1 time: {:.2?} \n", part1_start.elapsed());
+    let part1_result = part_1(input);
+    let part1_elapsed = part1_start.elapsed();
+    println!("Part 1 answer: {}", part1_result);
+    println!("Part 1 time: {:.2?} \n", part1_elapsed);
 }
 
 fn solve_part_2(input: Input) {
     let part2_start = Instant::now();
-    let part_2_result = part_2(input);
-    println!("Part 2 answer: {}", part_2_result);
-    println!("Part 2 time: {:.2?}", part2_start.elapsed());
+    let part2_result = part_2(input);
+    let part2_elapsed = part2_start.elapsed();
+    println!("Part 2 answer: {}", part2_result);
+    println!("Part 2 time: {:.2?}", part2_elapsed);
 }
 
 fn main() {
