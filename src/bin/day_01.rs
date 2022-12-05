@@ -4,29 +4,17 @@ fn parse_input(path: &str) -> Vec<i32> {
     fs::read_to_string(path)
         .expect("should read file")
         .split("\n\n")
-        .map(|x| {
-            x.trim()
-                .lines()
-                .map(|y| y.parse::<i32>().unwrap())
-                .sum()
-        })
+        .map(|x| x.trim().lines().map(|y| y.parse::<i32>().unwrap()).sum())
         .collect()
 }
 
 fn part_1(elves: &Vec<i32>) -> i32 {
-    *elves
-        .iter()
-        .max()
-        .unwrap()
+    *elves.iter().max().unwrap()
 }
 
 fn part_2(mut elves: Vec<i32>) -> i32 {
     elves.sort();
-    elves
-        .iter()
-        .rev()
-        .take(3)
-        .sum()
+    elves.iter().rev().take(3).sum()
 }
 
 fn main() {

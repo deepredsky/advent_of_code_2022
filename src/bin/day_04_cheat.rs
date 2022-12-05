@@ -16,8 +16,7 @@ impl Section {
         self.lo <= other.lo && self.hi >= other.hi
     }
     fn intersects(&self, other: &Section) -> bool {
-        (other.lo >= self.lo && other.lo <= self.hi)
-            || (self.lo >= other.lo && self.lo <= other.hi)
+        (other.lo >= self.lo && other.lo <= self.hi) || (self.lo >= other.lo && self.lo <= other.hi)
     }
 }
 
