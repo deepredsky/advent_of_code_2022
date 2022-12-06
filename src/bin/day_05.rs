@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use parse_display::{Display, FromStr};
 use std::fs;
 use std::time::Instant;
@@ -13,19 +14,49 @@ struct Instruction {
     n: usize,
 }
 
-fn generate_crates() -> Vec<Crate> {
-    vec![
-        vec!['€'],
-        vec!['B', 'Z', 'T'],
-        vec!['V', 'H', 'T', 'D', 'N'],
-        vec!['B', 'F', 'M', 'D'],
-        vec!['T', 'J', 'G', 'W', 'V', 'Q', 'L'],
-        vec!['W', 'D', 'G', 'P', 'V', 'F', 'Q', 'M'],
-        vec!['V', 'Z', 'Q', 'G', 'H', 'F', 'S'],
-        vec!['Z', 'S', 'N', 'R', 'L', 'T', 'C', 'W'],
-        vec!['Z', 'H', 'W', 'D', 'J', 'N', 'R', 'M'],
-        vec!['M', 'Q', 'L', 'F', 'D', 'S'],
-    ]
+const CRATES_INPUT: &str = "
+                        [R] [J] [W]
+            [R] [N]     [T] [T] [C]
+[R]         [P] [G]     [J] [P] [T]
+[Q]     [C] [M] [V]     [F] [F] [H]
+[G] [P] [M] [S] [Z]     [Z] [C] [Q]
+[P] [C] [P] [Q] [J] [J] [P] [H] [Z]
+[C] [T] [H] [T] [H] [P] [G] [L] [V]
+[F] [W] [B] [L] [P] [D] [L] [N] [G]
+ 1   2   3   4   5   6   7   8   9 
+";
+
+fn parse_crates(input: &str) -> Vec<Vec<char>> {
+    let mut lines: Vec<String> = input
+        .lines()
+        .map(|line| line.to_string())
+        .collect::<Vec<String>>();
+
+        lines.pop();
+
+    let y: Vec<Vec<Option<char>>> = lines
+        .iter()
+        .rev()
+        .map(|line| {
+            let x: Vec<Option<char>> = line
+                .chars()
+                .chunks(4)
+                .into_iter()
+                .map(|mut f| f.find(|&y| y.is_alphabetic()))
+                .collect::<Vec<Option<char>>>();
+
+            println!("{:?}", x);
+            x
+        })
+        .collect();
+
+    matrix_transpose(y)
+}
+
+fn generate_crates() -> Vec<Vec<char>> {
+    let mut m = parse_crates(CRATES_INPUT);
+    m.insert(0 , vec!['X']); // fake the 0th item
+    m
 }
 
 fn parse_input(path: &str) -> Input {
@@ -62,7 +93,7 @@ fn compute_result(crates: Vec<Crate>) -> String {
         let letter = c[c.len() - 1];
         result.push(letter);
     }
-    result[1..].iter().collect::<String>()
+    result[1..].iter().map(|x| x.to_string()).collect::<String>()
 }
 
 fn part_1(input: Input) -> String {
@@ -97,10 +128,21 @@ fn solve_part_2(input: Input) {
     println!("Part 2 time: {:.2?}", part2_elapsed);
 }
 
+fn matrix_transpose(m: Vec<Vec<Option<char>>>) -> Vec<Vec<char>> {
+    let mut t = vec![Vec::with_capacity(m.len()); m[0].len()];
+    for r in m {
+        for i in 0..r.len() {
+            if r[i].is_some() {
+                t[i].push(r[i].unwrap());
+            }
+        }
+    }
+    t
+}
+
 fn main() {
-    //let input = parse_input("data/day-04.txt");
     let input = parse_input("data/day-05.txt");
-    // println!("input: {:?}", input);
+    //println!("input: {:?}", input);
     solve_part_1(input.clone());
     solve_part_2(input.clone());
 }
