@@ -3,7 +3,6 @@ use parse_display::{Display, FromStr};
 use std::fs;
 use std::time::Instant;
 
-type Input = Vec<Instruction>;
 type Crate = Vec<char>;
 
 #[derive(Copy, Clone, Debug, FromStr, Display)]
@@ -14,17 +13,19 @@ struct Instruction {
     n: usize,
 }
 
-const CRATES_INPUT: &str = "
-                        [R] [J] [W]
-            [R] [N]     [T] [T] [C]
-[R]         [P] [G]     [J] [P] [T]
-[Q]     [C] [M] [V]     [F] [F] [H]
-[G] [P] [M] [S] [Z]     [Z] [C] [Q]
-[P] [C] [P] [Q] [J] [J] [P] [H] [Z]
-[C] [T] [H] [T] [H] [P] [G] [L] [V]
-[F] [W] [B] [L] [P] [D] [L] [N] [G]
- 1   2   3   4   5   6   7   8   9 
-";
+struct Input {
+    instructions: Vec<Instruction>,
+    crates: Vec<Crate>,
+}
+
+impl Clone for Input {
+    fn clone(&self) -> Self {
+        Input {
+            instructions: self.instructions.clone(),
+            crates: self.crates.clone(),
+        }
+    }
+}
 
 fn parse_crates(input: &str) -> Vec<Vec<char>> {
     let mut lines: Vec<String> = input
@@ -32,59 +33,66 @@ fn parse_crates(input: &str) -> Vec<Vec<char>> {
         .map(|line| line.to_string())
         .collect::<Vec<String>>();
 
-        lines.pop();
+    lines.pop();
 
     let y: Vec<Vec<Option<char>>> = lines
         .iter()
         .rev()
-        .map(|line| {
-            let x: Vec<Option<char>> = line
-                .chars()
-                .chunks(4)
-                .into_iter()
-                .map(|mut f| f.find(|&y| y.is_alphabetic()))
-                .collect::<Vec<Option<char>>>();
-
-            println!("{:?}", x);
-            x
-        })
+        .map(|line| parse_crate_line(line))
         .collect();
 
     matrix_transpose(y)
 }
 
-fn generate_crates() -> Vec<Vec<char>> {
-    let mut m = parse_crates(CRATES_INPUT);
-    m.insert(0 , vec!['X']); // fake the 0th item
-    m
+fn parse_crate_line(line: &str) -> Vec<Option<char>> {
+    line.chars()
+        .chunks(4)
+        .into_iter()
+        .map(|mut f| f.find(|&y| y.is_alphabetic()))
+        .collect::<Vec<Option<char>>>()
 }
 
 fn parse_input(path: &str) -> Input {
-    fs::read_to_string(path)
+    let contents: Vec<String> = fs::read_to_string(path)
         .expect("should read file")
+        .split("\n\n")
+        .map(|x| x.to_string())
+        .collect();
+
+    let crates_input: String = contents.first().unwrap().to_string();
+    let mut crates = parse_crates(&crates_input);
+    crates.insert(0, vec!['X']); // fake the 0th item
+
+    let instructions: Vec<Instruction> = contents
+        .last()
+        .unwrap()
+        .to_string()
         .lines()
         .map(|x| x.parse::<Instruction>().unwrap())
-        .collect()
-}
+        .collect();
 
-fn move_box(crates: Vec<Crate>, from: usize, to: usize, n: usize) -> Vec<Crate> {
-    let mut new_crates = crates.clone();
-    for _ in 0..n {
-        let xbox = new_crates[from].pop().unwrap();
-        new_crates[to].push(xbox);
+    Input {
+        crates,
+        instructions,
     }
-    new_crates
 }
 
-fn move_box_2(crates: Vec<Crate>, from: usize, to: usize, n: usize) -> Vec<Crate> {
-    let mut new_crates = crates.clone();
+fn move_box(mut crates: Vec<Crate>, from: usize, to: usize, n: usize) -> Vec<Crate> {
+    for _ in 0..n {
+        let xbox = crates[from].pop().unwrap();
+        crates[to].push(xbox);
+    }
+    crates
+}
+
+fn move_box_2(mut crates: Vec<Crate>, from: usize, to: usize, n: usize) -> Vec<Crate> {
     let mut boxes = vec![];
     for _ in 0..n {
-        let xbox = new_crates[from].pop().unwrap();
+        let xbox = crates[from].pop().unwrap();
         boxes.insert(0, xbox);
     }
-    new_crates[to].append(&mut boxes);
-    new_crates
+    crates[to].append(&mut boxes);
+    crates
 }
 
 fn compute_result(crates: Vec<Crate>) -> String {
@@ -93,20 +101,23 @@ fn compute_result(crates: Vec<Crate>) -> String {
         let letter = c[c.len() - 1];
         result.push(letter);
     }
-    result[1..].iter().map(|x| x.to_string()).collect::<String>()
+    result[1..]
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<String>()
 }
 
 fn part_1(input: Input) -> String {
-    let mut crates = generate_crates();
-    for i in input {
+    let mut crates = input.crates;
+    for i in input.instructions {
         crates = move_box(crates, i.from, i.to, i.n);
     }
     compute_result(crates)
 }
 
 fn part_2(input: Input) -> String {
-    let mut crates = generate_crates();
-    for i in input {
+    let mut crates = input.crates;
+    for i in input.instructions {
         crates = move_box_2(crates, i.from, i.to, i.n);
     }
     compute_result(crates)
