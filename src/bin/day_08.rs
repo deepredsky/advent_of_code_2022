@@ -4,7 +4,7 @@ use std::time::Instant;
 use itertools::Itertools;
 
 type Input = String;
-type ParsedInput = Vec<Vec<isize>>;
+type ParsedInput = Vec<Vec<usize>>;
 
 fn puzzle_input(path: &str) -> Input {
     fs::read_to_string(path).expect("should read file")
@@ -15,7 +15,7 @@ fn parse_input(input: &Input) -> ParsedInput {
         .lines()
         .map(|x| {
             x.chars()
-                .map(|c| c.to_string().parse::<isize>().unwrap())
+                .map(|c| c.to_string().parse::<usize>().unwrap())
                 .collect()
         })
         .collect()
@@ -39,9 +39,9 @@ fn solve_part_2(input: &Input) -> usize {
     part2_result
 }
 
-fn neighbors(ri: isize, ci: isize, val: isize, data: &ParsedInput) -> bool {
-    let r_len: isize = data.len().try_into().unwrap();
-    let c_len: isize = data.first().unwrap().len().try_into().unwrap();
+fn neighbors(ri: usize, ci: usize, val: usize, data: &ParsedInput) -> bool {
+    let r_len: usize = data.len().try_into().unwrap();
+    let c_len: usize = data.first().unwrap().len().try_into().unwrap();
 
     if ri == 0 || ri == r_len - 1 {
         return true;
@@ -51,23 +51,16 @@ fn neighbors(ri: isize, ci: isize, val: isize, data: &ParsedInput) -> bool {
         return true;
     }
 
-    let north: Vec<(isize, isize)> = (0..ri).map(|x| (x, ci)).collect();
-    let south: Vec<(isize, isize)> = (ri + 1..r_len).map(|x| (x, ci)).collect();
-    let west: Vec<(isize, isize)> = (0..ci).map(|x| (ri, x)).collect();
-    let east: Vec<(isize, isize)> = (ci + 1..c_len).map(|x| (ri, x)).collect();
+    let north: Vec<(usize, usize)> = (0..ri).map(|x| (x, ci)).collect();
+    let south: Vec<(usize, usize)> = (ri + 1..r_len).map(|x| (x, ci)).collect();
+    let west: Vec<(usize, usize)> = (0..ci).map(|x| (ri, x)).collect();
+    let east: Vec<(usize, usize)> = (ci + 1..c_len).map(|x| (ri, x)).collect();
 
     let segments: Vec<_> = vec![east, west, north, south];
 
-    segments.iter().any(|segment| {
-        segment.iter().all(|(r1, c1)| {
-            let r11: usize = *r1 as usize;
-            let c11: usize = *c1 as usize;
-
-            let x = data[r11][c11];
-
-            x < val
-        })
-    })
+    segments
+        .iter()
+        .any(|segment| segment.iter().all(|(r1, c1)| data[*r1][*c1] < val))
 }
 
 fn find_visible(input: &Input) -> usize {
@@ -75,7 +68,7 @@ fn find_visible(input: &Input) -> usize {
     let data = parse_input(input);
     for (ri, row) in data.iter().enumerate() {
         for (ci, col) in row.iter().enumerate() {
-            if neighbors(ri.try_into().unwrap(), ci.try_into().unwrap(), *col, &data) {
+            if neighbors(ri, ci, *col, &data) {
                 visible_trees += 1
             }
         }
@@ -89,8 +82,7 @@ fn max_scenic_score(input: &Input) -> usize {
     let data = parse_input(input);
     for (ri, row) in data.iter().enumerate() {
         for (ci, col) in row.iter().enumerate() {
-            let score: usize =
-                scenic_score(ri.try_into().unwrap(), ci.try_into().unwrap(), *col, &data);
+            let score: usize = scenic_score(ri, ci, *col, &data);
             scenic_scores.push(score);
         }
     }
@@ -98,9 +90,9 @@ fn max_scenic_score(input: &Input) -> usize {
     *scenic_scores.iter().max().unwrap()
 }
 
-fn scenic_score(ri: isize, ci: isize, val: isize, data: &ParsedInput) -> usize {
-    let r_len: isize = data.len().try_into().unwrap();
-    let c_len: isize = data.first().unwrap().len().try_into().unwrap();
+fn scenic_score(ri: usize, ci: usize, val: usize, data: &ParsedInput) -> usize {
+    let r_len: usize = data.len();
+    let c_len: usize = data.first().unwrap().len();
 
     if ri == 0 || ri == r_len - 1 {
         return 0;
@@ -110,26 +102,23 @@ fn scenic_score(ri: isize, ci: isize, val: isize, data: &ParsedInput) -> usize {
         return 0;
     }
 
-    let north: Vec<(isize, isize)> = (0..ri)
-        .rev()
-        .map(|x| (x, ci))
-        .collect::<Vec<(isize, isize)>>();
-
-    let south: Vec<(isize, isize)> = (ri + 1..r_len).map(|x| (x, ci)).collect();
-    let west: Vec<(isize, isize)> = (0..ci).rev().map(|x| (ri, x)).collect();
-    let east: Vec<(isize, isize)> = (ci + 1..c_len).map(|x| (ri, x)).collect();
+    // segment of trees in each direction
+    // ordered by the closeness
+    let north: Vec<(usize, usize)> = (0..ri).rev().map(|x| (x, ci)).collect();
+    let south: Vec<(usize, usize)> = (ri + 1..r_len).map(|x| (x, ci)).collect();
+    let west: Vec<(usize, usize)> = (0..ci).rev().map(|x| (ri, x)).collect();
+    let east: Vec<(usize, usize)> = (ci + 1..c_len).map(|x| (ri, x)).collect();
 
     let segments: Vec<_> = vec![east, west, north, south];
 
+    // Find the first tree going outwards that blocks the view
+    // If none found, then the scenic_score is the number of trees until reaching the edge ie
+    // length of the segment in this direction
     segments.iter().fold(1, |acc, el| {
-        let m = el.iter().find_position(|&(r1, c1)| {
-            let r11 = *r1 as usize;
-            let c11 = *c1 as usize;
-            val <= data[r11][c11]
-        });
+        let m = el.iter().find_position(|&(r1, c1)| val <= data[*r1][*c1]);
 
         let count: usize = match m {
-            Some((pos, _)) => pos + 1,
+            Some((pos, _)) => pos + 1, // first tree is at 0th position
             None => el.len(),
         };
 
