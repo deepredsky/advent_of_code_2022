@@ -6,8 +6,7 @@ use std::time::Instant;
 type Input = String;
 
 fn parse_input(path: &str) -> Input {
-    fs::read_to_string(path)
-        .expect("should read file")
+    fs::read_to_string(path).expect("should read file")
 }
 
 fn solve_part_1(input: &Input) {

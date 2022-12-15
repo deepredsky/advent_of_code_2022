@@ -21,7 +21,9 @@ fn parse_fs(input: Input) -> HashMap<String, usize> {
     let mut stack: Vec<&str> = vec![];
 
     for f in input.split("$ ") {
-        if f.is_empty() { continue; }
+        if f.is_empty() {
+            continue;
+        }
         let m = f.lines().collect::<Vec<_>>();
         let (head, tail) = m.split_at(1);
 
@@ -71,7 +73,8 @@ fn parse_fs(input: Input) -> HashMap<String, usize> {
 fn solve_part_1(input: &Input) -> usize {
     let part1_start = Instant::now();
     let fs = parse_fs(input.to_string());
-    let part1_result = fs.iter()
+    let part1_result = fs
+        .iter()
         .filter(|&(_f, s)| *s <= 100000)
         .map(|(_f, s)| *s)
         .sum();
@@ -87,7 +90,8 @@ fn solve_part_2(input: &Input) -> usize {
     let total_space: usize = 70000000;
     let required_free_space: usize = 30000000;
     let cur_free_space: usize = total_space - fs.get("/").unwrap();
-    let part2_result = fs.iter()
+    let part2_result = fs
+        .iter()
         .filter(|&(_f, s)| cur_free_space + s >= required_free_space)
         .map(|(_f, s)| *s)
         .min()
