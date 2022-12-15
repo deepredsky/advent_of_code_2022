@@ -39,9 +39,10 @@ fn solve_part_2(input: &Input) -> usize {
     part2_result
 }
 
-fn neighbors(ri: usize, ci: usize, val: usize, data: &ParsedInput) -> bool {
-    let r_len: usize = data.len().try_into().unwrap();
-    let c_len: usize = data.first().unwrap().len().try_into().unwrap();
+fn neighbors(ri: usize, ci: usize, data: &ParsedInput) -> bool {
+    let r_len: usize = data.len();
+    let c_len: usize = data.first().unwrap().len();
+    let val: usize = data[ri][ci];
 
     if ri == 0 || ri == r_len - 1 {
         return true;
@@ -67,8 +68,8 @@ fn find_visible(input: &Input) -> usize {
     let mut visible_trees: usize = 0;
     let data = parse_input(input);
     for (ri, row) in data.iter().enumerate() {
-        for (ci, col) in row.iter().enumerate() {
-            if neighbors(ri, ci, *col, &data) {
+        for (ci, _col) in row.iter().enumerate() {
+            if neighbors(ri, ci, &data) {
                 visible_trees += 1
             }
         }
@@ -81,8 +82,8 @@ fn max_scenic_score(input: &Input) -> usize {
     let mut scenic_scores: Vec<usize> = vec![];
     let data = parse_input(input);
     for (ri, row) in data.iter().enumerate() {
-        for (ci, col) in row.iter().enumerate() {
-            let score: usize = scenic_score(ri, ci, *col, &data);
+        for (ci, _col) in row.iter().enumerate() {
+            let score: usize = scenic_score(ri, ci, &data);
             scenic_scores.push(score);
         }
     }
@@ -90,9 +91,10 @@ fn max_scenic_score(input: &Input) -> usize {
     *scenic_scores.iter().max().unwrap()
 }
 
-fn scenic_score(ri: usize, ci: usize, val: usize, data: &ParsedInput) -> usize {
+fn scenic_score(ri: usize, ci: usize, data: &ParsedInput) -> usize {
     let r_len: usize = data.len();
     let c_len: usize = data.first().unwrap().len();
+    let val: usize = data[ri][ci];
 
     if ri == 0 || ri == r_len - 1 {
         return 0;
@@ -151,17 +153,17 @@ mod tests {
     #[test]
     fn part_1_test_1() {
         let data = parse_input(&SAMPLE.to_string());
-        assert!(neighbors(1, 1, 5, &data));
-        assert!(neighbors(1, 2, 5, &data));
-        assert!(!neighbors(1, 3, 1, &data));
-        assert!(neighbors(2, 1, 5, &data));
+        assert!(neighbors(1, 1, &data));
+        assert!(neighbors(1, 2, &data));
+        assert!(!neighbors(1, 3, &data));
+        assert!(neighbors(2, 1, &data));
     }
 
     #[test]
     fn part_2_test_1() {
         let data = parse_input(&SAMPLE.to_string());
-        assert_eq!(scenic_score(1, 2, 5, &data), 4);
-        assert_eq!(scenic_score(3, 2, 5, &data), 8);
+        assert_eq!(scenic_score(1, 2, &data), 4);
+        assert_eq!(scenic_score(3, 2, &data), 8);
     }
 
     #[test]
