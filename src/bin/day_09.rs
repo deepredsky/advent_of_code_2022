@@ -1,9 +1,7 @@
+use array_tool::vec::Uniq;
 use parse_display::{Display, FromStr};
 use std::fs;
 use std::time::Instant;
-use array_tool::vec::Uniq;
-
-use itertools::Itertools;
 
 type Input = String;
 
@@ -26,23 +24,22 @@ fn parse_input(input: &Input) -> Vec<Instruction> {
 }
 
 fn solve_part_1(input: &Input) -> usize {
-let part1_start = Instant::now();
-let part1_result = find_positions(input);
-let part1_elapsed = part1_start.elapsed();
-println!("Part 1 answer: {}", part1_result);
-println!("Part 1 time: {:.2?} \n", part1_elapsed);
-part1_result
+    let part1_start = Instant::now();
+    let part1_result = find_positions(input, 2);
+    let part1_elapsed = part1_start.elapsed();
+    println!("Part 1 answer: {}", part1_result);
+    println!("Part 1 time: {:.2?} \n", part1_elapsed);
+    part1_result
 }
 
-// fn solve_part_2(input: &Input) -> usize {
-// let part2_start = Instant::now();
-// let part2_result = max_scenic_score(input);
-// let part2_elapsed = part2_start.elapsed();
-// println!("Part 2 answer: {}", part2_result);
-// println!("Part 2 time: {:.2?} \n", part2_elapsed);
-// part2_result
-// }
-
+fn solve_part_2(input: &Input) -> usize {
+    let part2_start = Instant::now();
+    let part2_result = find_positions(input, 10);
+    let part2_elapsed = part2_start.elapsed();
+    println!("Part 1 answer: {}", part2_result);
+    println!("Part 1 time: {:.2?} \n", part2_elapsed);
+    part2_result
+}
 
 type Point = (isize, isize);
 
@@ -54,11 +51,9 @@ fn is_adjacent(pos1: Point, pos2: Point) -> bool {
         (-1, 1),
         (0, 1),
         (1, 1),
-
         (-1, 0),
         (0, 0),
         (1, 0),
-
         (-1, -1),
         (0, -1),
         (1, -1),
@@ -67,7 +62,36 @@ fn is_adjacent(pos1: Point, pos2: Point) -> bool {
     .any(|(dx, dy)| (x1 + dx == x2) && (y1 + dy == y2))
 }
 
-fn find_positions(input: &Input) -> usize {
+fn next_point(pos1: Point, pos2: Point) -> Point {
+    let (x1, y1) = pos1;
+    let (x2, y2) = pos2;
+
+    if x1 == x2 && y1 > y2 {
+        return (x1, y1 - 1);
+    }
+
+    if x1 == x2 && y1 < y2 {
+        return (x1, y1 + 1);
+    }
+
+    if y1 == y2 && x1 < x2 {
+        return (x1 + 1, y1);
+    }
+
+    if y1 == y2 && x1 > x2 {
+        return (x1 - 1, y1);
+    }
+
+    *vec![(-1, 1), (1, 1), (-1, -1), (1, -1)]
+        .into_iter()
+        .map(|(dx, dy)| (x1 + dx, y1 + dy))
+        .collect::<Vec<Point>>()
+        .iter()
+        .find(|(x, y)| is_adjacent((*x, *y), (x2, y2)))
+        .unwrap()
+}
+
+fn find_positions(input: &Input, size: usize) -> usize {
     let instructions = parse_input(input);
 
     let mut tail_visited_points: Vec<Point> = vec![(0, 0)];
@@ -81,87 +105,50 @@ fn find_positions(input: &Input) -> usize {
     // [(41), (30), (20)] -> prev
     // [(42), (41), (30)]
 
-    let mut state: Vec<Point> = vec![(0,0), (0,0)];
+    let mut state: Vec<Point> = vec![];
+
+    for _ in 0..size {
+        state.push((0, 0));
+    }
+
+    // dbg!(&state);
 
     for instruction in instructions {
         let Instruction { direction, count } = instruction;
 
-        match direction {
-            'U' => {
-                for _ in 0..count {
-                    let prev_state = state.clone();
+        for _ in 0..count {
+            let (cur_x, cur_y) = state[0];
 
-                    let (cur_x, cur_y) = state.first().unwrap();
-
-                    state[0] = (*cur_x, cur_y + 1);
-
-                    // println!("Cur: {:?}, Prev: {:?}", (&cur_x, cur_y), (prev_x, prev_y));
-                    if !is_adjacent(*state.first().unwrap(), *state.last().unwrap()) {
-                        println!("not adjacent!");
-                        state[1] = prev_state[0];
-                    }
-                    if state.last().unwrap() != prev_state.last().unwrap() {
-                        tail_visited_points.push(*state.last().unwrap());
-                    }
+            match direction {
+                'U' => {
+                    state[0] = (cur_x, cur_y + 1);
+                }
+                'D' => {
+                    state[0] = (cur_x, cur_y - 1);
+                }
+                'L' => {
+                    state[0] = (cur_x - 1, cur_y);
+                }
+                'R' => {
+                    state[0] = (cur_x + 1, cur_y);
+                }
+                _ => {
+                    panic!("unknown direction")
                 }
             }
-            'D' => {
-                for _ in 0..count {
-                    let prev_state = state.clone();
 
-                    let (cur_x, cur_y) = state.first().unwrap();
+            for pointer in 0..(state.len() - 1) {
+                let prev_state = state.clone();
 
-                    state[0] = (*cur_x, cur_y - 1);
+                if !is_adjacent(state[pointer], state[pointer + 1]) {
+                    state[pointer + 1] = next_point(state[pointer + 1], state[pointer]);
+                }
 
-                    // println!("Cur: {:?}, Prev: {:?}", (&cur_x, cur_y), (prev_x, prev_y));
-                    if !is_adjacent(*state.first().unwrap(), *state.last().unwrap()) {
-                        println!("not adjacent!");
-                        state[1] = prev_state[0];
-                    }
-                    if state.last().unwrap() != prev_state.last().unwrap() {
-                        tail_visited_points.push(*state.last().unwrap());
-                    }
+                if state.last().unwrap() != prev_state.last().unwrap() {
+                    tail_visited_points.push(*state.last().unwrap());
                 }
             }
-            'L' => {
-                for _ in 0..count {
-                    let prev_state = state.clone();
-
-                    let (cur_x, cur_y) = state.first().unwrap();
-
-                    state[0] = (cur_x -1, *cur_y);
-
-                    // println!("Cur: {:?}, Prev: {:?}", (&cur_x, cur_y), (prev_x, prev_y));
-                    if !is_adjacent(*state.first().unwrap(), *state.last().unwrap()) {
-                        println!("not adjacent!");
-                        state[1] = prev_state[0];
-                    }
-                    if state.last().unwrap() != prev_state.last().unwrap() {
-                        tail_visited_points.push(*state.last().unwrap());
-                    }
-                }
-            }
-            'R' => {
-                for _ in 0..count {
-                    let prev_state = state.clone();
-
-                    let (cur_x, cur_y) = state.first().unwrap();
-
-                    state[0] = (cur_x +1, *cur_y);
-
-                    // println!("Cur: {:?}, Prev: {:?}", (&cur_x, cur_y), (prev_x, prev_y));
-                    if !is_adjacent(*state.first().unwrap(), *state.last().unwrap()) {
-                        println!("not adjacent!");
-                        state[1] = prev_state[0];
-                    }
-
-                    if state.last().unwrap() != prev_state.last().unwrap() {
-                        tail_visited_points.push(*state.last().unwrap());
-                    }
-                }
-            }
-            _ => panic!("unknown direction"),
-        };
+        }
     }
 
     // dbg!(&tail_visited_points);
@@ -172,7 +159,7 @@ fn find_positions(input: &Input) -> usize {
 fn main() {
     let input = puzzle_input("data/day-09.txt");
     solve_part_1(&input);
-    // solve_part_2(&input);
+    solve_part_2(&input);
 }
 
 #[cfg(test)]
@@ -190,7 +177,13 @@ R 2";
 
     #[test]
     fn part_1_test() {
-        let size = find_positions(&SAMPLE.to_string());
+        let size = find_positions(&SAMPLE.to_string(), 2);
         assert_eq!(size, 13)
+    }
+
+    #[test]
+    fn part_2_test() {
+        let size = find_positions(&SAMPLE.to_string(), 10);
+        assert_eq!(size, 1)
     }
 }
